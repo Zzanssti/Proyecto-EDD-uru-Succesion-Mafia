@@ -8,7 +8,11 @@ class ArbolMafia {
 private:
 Nodo* raiz;
 Nodo* cabezaLista;
-
+bool esElegible(Nodo* n, bool permitirCarcel) const;
+Nodo* buscarPrimeroEnSubarbol(Nodo* subraiz, bool permitirCarcel, bool incluirRaiz) const;
+Nodo* buscarEnRamaCompanero(Nodo* companero, bool permitirCarcel) const;
+Nodo* seleccionarSucesor(Nodo* jefeActual, bool permitirCarcel) const;
+void promoverNuevoJefe(Nodo* jefeAnterior, Nodo* nuevoJefe);
 void liberarMemoria();
 Nodo* buscarPorId(int id) const;
 Nodo* obtenerJefeActual() const;
@@ -18,7 +22,7 @@ void imprimirOrdenSucesion(Nodo* nodo, int& posicion) const;
 public:
 ArbolMafia();
 ~ArbolMafia();
-
+void verificarSucesion();
 bool cargarDesdeCSV(const std::string& rutaCSV);
 bool guardarEnCSV(const std::string& rutaCSV) const;
 void mostrarLineaSucesion() const;

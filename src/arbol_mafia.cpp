@@ -64,6 +64,7 @@ while (actual) {
     }
     actual = actual->sig_lista;
 }
+verificarSucesion();
 return true;
 }
 
@@ -153,4 +154,88 @@ std::cout << "ID: " << actual->id
 << "\n";
 actual = actual->sig_lista;
 }
+}
+bool ArbolMafia::esElegible(Nodo* n, bool permitirCarcel) const {
+    if (!n || n->is_dead == 1) return false;
+    if (!permitirCarcel && n->in_jail == 1) return false;
+    if (!permitirCarcel && n->age > 70) return false;
+    return true;
+}
+
+Nodo* ArbolMafia::buscarPrimeroEnSubarbol(Nodo* subraiz, bool permitirCarcel, bool incluirRaiz) const {
+    if (!subraiz) return nullptr;
+    if (incluirRaiz && esElegible(subraiz, permitirCarcel)) {
+        return subraiz;
+    }
+    Nodo* izqRes = buscarPrimeroEnSubarbol(subraiz->izq, permitirCarcel, true);
+    if (izqRes) return izqRes;
+    return buscarPrimeroEnSubarbol(subraiz->der, permitirCarcel, true);
+}
+
+Nodo* ArbolMafia::buscarEnRamaCompanero(Nodo* companero, bool permitirCarcel) const {
+    if (!companero) return nullptr;
+
+    Nodo* enHijos = buscarPrimeroEnSubarbol(companero->izq, permitirCarcel, true);
+    if (enHijos) return enHijos;
+
+    enHijos = buscarPrimeroEnSubarbol(companero->der, permitirCarcel, true);
+    if (enHijos) return enHijos;
+
+    if (esElegible(companero, permitirCarcel)) {
+        return companero;
+    }
+    return nullptr;
+}
+
+Nodo* ArbolMafia::seleccionarSucesor(Nodo* jefeActual, bool permitirCarcel) const {
+    if (!jefeActual) return nullptr;
+
+    // 3.1: Primer sucesor vivo y libre en su propio árbol
+    Nodo* candidato = buscarPrimeroEnSubarbol(jefeActual, permitirCarcel, false);
+    if (candidato) return candidato;
+
+    // 3.2 y 3.3: Árbol del compañero sucesor de su jefe, o el compañero mismo si está libre y sin sucesores
+    if (jefeActual->padre) {
+        Nodo* padre = jefeActual->padre;
+        Nodo* companero = (padre->izq == jefeActual) ? padre->der : padre->izq;
+        candidato = buscarEnRamaCompanero(companero, permitirCarcel);
+        if (candidato) return candidato;
+
+        // 3.4: Árbol del compañero sucesor de su anterior jefe (abuelo)
+        if (padre->padre) {
+            Nodo* abuelo = padre->padre;
+            Nodo* companeroAnterior = (abuelo->izq == padre) ? abuelo->der : abuelo->izq;
+            candidato = buscarEnRamaCompanero(companeroAnterior, permitirCarcel);
+            if (candidato) return candidato;
+        }
+    }
+    return nullptr;
+}
+
+void ArbolMafia::promoverNuevoJefe(Nodo* jefeAnterior, Nodo* nuevoJefe) {
+    if (!nuevoJefe || jefeAnterior == nuevoJefe) return;
+
+    if (jefeAnterior) {
+        jefeAnterior->is_boss = 0;
+        jefeAnterior->was_boss = 1;
+    }
+    nuevoJefe->is_boss = 1;
+
+    std::cout << "\n[SUCESION AUTOMATICA] El nuevo jefe de la familia es: "
+              << nuevoJefe->name << " " << nuevoJefe->last_name
+              << " (ID: " << nuevoJefe->id << ")"
+              << (nuevoJefe->in_jail == 1 ? " [DIRIGIENDO DESDE PRISION]" : "")
+              << "\n";
+}
+
+void ArbolMafia::verificarSucesion() {
+    Nodo* jefeActual = obtenerJefeActual();
+    if (!jefeActual) return;
+
+    if (jefeActual->is_dead == 1) {
+        Nodo* sucesor = seleccionarSucesor(jefeActual, false);
+        if (sucesor) {
+            promoverNuevoJefe(jefeActual, sucesor);
+        }
+    }
 }
