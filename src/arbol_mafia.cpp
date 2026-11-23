@@ -1,6 +1,10 @@
 #include "arbol_mafia.h"
 #include "gestor_csv.h"
+#include "cola.h"
+#include <climits>
 #include <iostream>
+
+
 
 ArbolMafia::ArbolMafia() : raiz(nullptr), cabezaLista(nullptr) {}
 
@@ -208,6 +212,11 @@ Nodo* ArbolMafia::seleccionarSucesor(Nodo* jefeActual, bool permitirCarcel) cons
             candidato = buscarEnRamaCompanero(companeroAnterior, permitirCarcel);
             if (candidato) return candidato;
         }
+
+        // 3.5: Jefe mas cercano con dos sucesores fuera de la carcel
+        candidato = buscarJefeCercanoDosSucesores(jefeActual, permitirCarcel);
+    if (candidato) return candidato;
+
     }
     return nullptr;
 }
@@ -229,13 +238,135 @@ void ArbolMafia::promoverNuevoJefe(Nodo* jefeAnterior, Nodo* nuevoJefe) {
 }
 
 void ArbolMafia::verificarSucesion() {
-    Nodo* jefeActual = obtenerJefeActual();
-    if (!jefeActual) return;
+   
+Nodo* jefeActual = obtenerJefeActual();
+if (!jefeActual) return;
 
-    if (jefeActual->is_dead == 1) {
-        Nodo* sucesor = seleccionarSucesor(jefeActual, false);
-        if (sucesor) {
-            promoverNuevoJefe(jefeActual, sucesor);
+// Regla 3.7: Si el jefe paso de 70 anos o fue a prision
+if (jefeActual->is_dead == 0 && (jefeActual->age > 70 || jefeActual->in_jail == 1)) {
+    Nodo* sucesorArbol = buscarPrimeroEnSubarbol(jefeActual, false, false);
+    if (!sucesorArbol) {
+        sucesorArbol = seleccionarSucesor(jefeActual, false);
+    }
+    if (sucesorArbol) {
+        promoverNuevoJefe(jefeActual, sucesorArbol);
+    } else if (jefeActual->age > 70 && jefeActual->in_jail == 0) {
+        Nodo* encarcelado = seleccionarSucesor(jefeActual, true);
+        if (!encarcelado) encarcelado = buscarMasCercanoEncarcelado(jefeActual);
+        if (encarcelado) promoverNuevoJefe(jefeActual, encarcelado);
+    }
+    return;
+}
+
+// Reglas 3.1 a 3.6: Si el jefe actual murio
+if (jefeActual->is_dead == 1) {
+    Nodo* sucesor = seleccionarSucesor(jefeActual, false);
+
+    if (!sucesor) {
+        sucesor = seleccionarSucesor(jefeActual, true);
+        if (!sucesor) {
+            sucesor = buscarMasCercanoEncarcelado(jefeActual);
         }
     }
+
+    if (sucesor) {
+        promoverNuevoJefe(jefeActual, sucesor);
+    } else {
+        jefeActual->is_boss = 0;
+        jefeActual->was_boss = 1;
+        std::cout << "\n[ALERTA] No quedan miembros vivos disponibles para asumir el liderazgo.\n";
+    }
+
+
+}
+
+}
+
+int ArbolMafia::obtenerProfundidad(Nodo* n) const {
+int prof = 0;
+while (n && n->padre) {
+prof++;
+n = n->padre;
+}
+return prof;
+}
+
+int ArbolMafia::distanciaEntreNodos(Nodo* a, Nodo* b) const {
+if (!a || !b) return INT_MAX;
+int profA = obtenerProfundidad(a);
+int profB = obtenerProfundidad(b);
+int dist = 0;
+
+while (profA > profB) {
+    a = a->padre;
+    profA--;
+    dist++;
+}
+while (profB > profA) {
+    b = b->padre;
+    profB--;
+    dist++;
+}
+while (a && b && a != b) {
+    a = a->padre;
+    b = b->padre;
+    dist += 2;
+}
+return dist;
+}
+
+// Regla 3.5: Jefe mas cercano con dos sucesores fuera de la carcel
+Nodo* ArbolMafia::buscarJefeCercanoDosSucesores(Nodo* jefeActual, bool permitirCarcel) const {
+if (!raiz || !jefeActual) return nullptr;
+
+ColaNodos cola;
+cola.encolar(raiz);
+
+Nodo* mejorCandidato = nullptr;
+int menorDistancia = INT_MAX;
+
+while (!cola.estaVacia()) {
+    Nodo* actual = cola.desencolar();
+    if (actual->izq) cola.encolar(actual->izq);
+    if (actual->der) cola.encolar(actual->der);
+
+    if (actual == jefeActual) continue;
+
+    if (actual->izq && actual->der) {
+        if (esElegible(actual->izq, permitirCarcel) && esElegible(actual->der, permitirCarcel)) {
+            int d = distanciaEntreNodos(jefeActual, actual);
+            if (d < menorDistancia) {
+                menorDistancia = d;
+                mejorCandidato = actual->izq;
+            }
+        }
+    }
+}
+return mejorCandidato;
+}
+
+// Regla 3.6: Respaldo con miembros vivos en la carcel
+Nodo* ArbolMafia::buscarMasCercanoEncarcelado(Nodo* jefeActual) const {
+if (!raiz || !jefeActual) return nullptr;
+
+ColaNodos cola;
+cola.encolar(raiz);
+
+Nodo* mejor = nullptr;
+int menorDist = INT_MAX;
+
+while (!cola.estaVacia()) {
+    Nodo* actual = cola.desencolar();
+    if (actual->izq) cola.encolar(actual->izq);
+    if (actual->der) cola.encolar(actual->der);
+
+    if (actual != jefeActual && actual->is_dead == 0 && actual->in_jail == 1) {
+        int d = distanciaEntreNodos(jefeActual, actual);
+        if (d < menorDist) {
+            menorDist = d;
+            mejor = actual;
+        }
+    }
+}
+return mejor;
 }

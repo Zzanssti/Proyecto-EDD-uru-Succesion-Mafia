@@ -6,6 +6,10 @@
 
 class ArbolMafia {
 private:
+int obtenerProfundidad(Nodo* n) const;
+int distanciaEntreNodos(Nodo* a, Nodo* b) const;
+Nodo* buscarJefeCercanoDosSucesores(Nodo* jefeActual, bool permitirCarcel) const;
+Nodo* buscarMasCercanoEncarcelado(Nodo* jefeActual) const;
 Nodo* raiz;
 Nodo* cabezaLista;
 bool esElegible(Nodo* n, bool permitirCarcel) const;
