@@ -370,3 +370,79 @@ while (!cola.estaVacia()) {
 }
 return mejor;
 }
+void ArbolMafia::editarNodo(int id) {
+    Nodo* nodo = buscarPorId(id);
+    if (!nodo) {
+        std::cout << "[ERROR] No existe ningun miembro con ID " << id << ".\n";
+        return;
+    }
+
+    int opcion = -1;
+    do {
+        std::cout << "\nEditando a: " << nodo->name << " " << nodo->last_name
+                  << " (ID: " << nodo->id << " [Protegido], ID Jefe: " << nodo->id_boss << " [Protegido])\n";
+        std::cout << "1. Nombre (" << nodo->name << ")\n";
+        std::cout << "2. Apellido (" << nodo->last_name << ")\n";
+        std::cout << "3. Genero (" << nodo->gender << ")\n";
+        std::cout << "4. Edad (" << nodo->age << ")\n";
+        std::cout << "5. Esta muerto / is_dead (" << nodo->is_dead << ")\n";
+        std::cout << "6. En prision / in_jail (" << nodo->in_jail << ")\n";
+        std::cout << "7. Fue jefe / was_boss (" << nodo->was_boss << ")\n";
+        std::cout << "8. Es jefe / is_boss (" << nodo->is_boss << ")\n";
+        std::cout << "0. Finalizar edicion y verificar sucesion\n";
+        std::cout << "Seleccione campo a modificar: ";
+        std::cin >> opcion;
+
+        switch (opcion) {
+            case 1:
+                std::cout << "Nuevo nombre: ";
+                std::cin >> nodo->name;
+                break;
+            case 2:
+                std::cout << "Nuevo apellido: ";
+                std::cin >> nodo->last_name;
+                break;
+            case 3: {
+                char g;
+                std::cout << "Nuevo genero (H/M): ";
+                std::cin >> g;
+                if (g == 'H' || g == 'M' || g == 'h' || g == 'm') {
+                    nodo->gender = (g == 'h') ? 'H' : (g == 'm' ? 'M' : g);
+                } else {
+                    std::cout << "Genero invalido. Use H o M.\n";
+                }
+                break;
+            }
+            case 4:
+                std::cout << "Nueva edad: ";
+                std::cin >> nodo->age;
+                break;
+            case 5:
+                std::cout << "is_dead (0 = Vivo, 1 = Muerto): ";
+                std::cin >> nodo->is_dead;
+                nodo->is_dead = (nodo->is_dead != 0) ? 1 : 0;
+                break;
+            case 6:
+                std::cout << "in_jail (0 = Libre, 1 = Preso): ";
+                std::cin >> nodo->in_jail;
+                nodo->in_jail = (nodo->in_jail != 0) ? 1 : 0;
+                break;
+            case 7:
+                std::cout << "was_boss (0 = No, 1 = Si): ";
+                std::cin >> nodo->was_boss;
+                nodo->was_boss = (nodo->was_boss != 0) ? 1 : 0;
+                break;
+            case 8:
+                std::cout << "is_boss (0 = No, 1 = Si): ";
+                std::cin >> nodo->is_boss;
+                nodo->is_boss = (nodo->is_boss != 0) ? 1 : 0;
+                break;
+            case 0:
+                break;
+            default:
+                std::cout << "Opcion no valida.\n";
+        }
+    } while (opcion != 0);
+
+    verificarSucesion();
+}

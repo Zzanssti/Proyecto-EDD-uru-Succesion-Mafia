@@ -31,6 +31,7 @@ bool cargarDesdeCSV(const std::string& rutaCSV);
 bool guardarEnCSV(const std::string& rutaCSV) const;
 void mostrarLineaSucesion() const;
 void mostrarTodosLosMiembros() const;
+void editarNodo(int id);
 };
 
 #endif
