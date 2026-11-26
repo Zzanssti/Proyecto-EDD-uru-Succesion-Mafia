@@ -256,6 +256,68 @@ if (tipoEvento == 1) {
 }
 (this->*static_cast<void (ArbolMafia::*)()>(&ArbolMafia::verificarSucesion))();
 }
+
+void ArbolMafia::liberarMiembro(int id) {
+Nodo* objetivo = buscarPorId(id);
+if (!objetivo) {
+std::cout << "[ERROR] No se encontro un miembro con ID " << id << ".\n";
+return;
+}
+
+if (objetivo->is_dead == 1) {
+    std::cout << "[AVISO] No se puede liberar a un miembro fallecido.\n";
+    return;
+}
+
+if (objetivo->in_jail == 0) {
+    std::cout << "[INFO] " << objetivo->name << " " << objetivo->last_name << " ya no esta en prision.\n";
+    return;
+}
+
+objetivo->in_jail = 0;
+std::cout << "\n[LIBERACION] " << objetivo->name << " " << objetivo->last_name
+          << " (ID " << objetivo->id << ") ha salido de prision.\n";
+verificarSucesion(true);
+}
+
+bool ArbolMafia::esElegible(Nodo* n) const {
+if (n == nullptr) return false;
+return (n->is_dead == 0 && n->in_jail == 0 && n->age > 0 && n->age <= 70);
+}
+
+void ArbolMafia::limpiarJefes(Nodo* actual) {
+if (actual == nullptr) return;
+actual->is_boss = 0;
+limpiarJefes(actual->izq);
+limpiarJefes(actual->der);
+}
+
+Nodo* ArbolMafia::buscarMejorSucesor() {
+if (raiz == nullptr) return nullptr;
+
+// Recorrido por niveles (BFS) usando tu ColaNodos dinámica sin std::vector
+ColaNodos cola;
+cola.encolar(raiz);
+
+Nodo* mejor = nullptr;
+
+while (!cola.estaVacia()) {
+    Nodo* actual = cola.desencolar();
+    if (actual == nullptr) continue;
+
+    if (esElegible(actual)) {
+        if (mejor == nullptr || actual->age > mejor->age) {
+            mejor = actual;
+        }
+    }
+
+    if (actual->izq != nullptr) cola.encolar(actual->izq);
+    if (actual->der != nullptr) cola.encolar(actual->der);
+}
+
+return mejor;
+}
+
 void ArbolMafia::verificarSucesion(bool huboLiberacion) {
     Nodo* jefeActual = obtenerJefeActual();
 

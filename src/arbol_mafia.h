@@ -6,6 +6,9 @@
 
 class ArbolMafia {
 private:
+bool esElegible(Nodo* n) const;
+void limpiarJefes(Nodo* actual);
+Nodo* buscarMejorSucesor();
 int obtenerProfundidad(Nodo* n) const;
 int distanciaEntreNodos(Nodo* a, Nodo* b) const;
 Nodo* buscarJefeCercanoDosSucesores(Nodo* jefeActual, bool permitirCarcel) const;
@@ -34,6 +37,7 @@ void mostrarTodosLosMiembros() const;
 void editarNodo(int id);
 void simularEventoJefe(int tipoEvento); // 1:muerte, 2:carcel, 3: edad >70
 void verificarSucesion(bool huboLiberacion = false);
+void liberarMiembro(int id);
 };
 
 #endif
