@@ -68,7 +68,7 @@ while (actual) {
     }
     actual = actual->sig_lista;
 }
-verificarSucesion();
+(this->*static_cast<void (ArbolMafia::*)()>(&ArbolMafia::verificarSucesion))();
 return true;
 }
 
@@ -254,52 +254,65 @@ if (tipoEvento == 1) {
     std::cout << "\n[EVENTO] " << jefe->name << " " << jefe->last_name << " ha superado los 70 años (71).\n";
     jefe->age = 71;
 }
-verificarSucesion();
+(this->*static_cast<void (ArbolMafia::*)()>(&ArbolMafia::verificarSucesion))();
 }
+void ArbolMafia::verificarSucesion(bool huboLiberacion) {
+    Nodo* jefeActual = obtenerJefeActual();
 
-void ArbolMafia::verificarSucesion() {
-   
-Nodo* jefeActual = obtenerJefeActual();
-if (!jefeActual) return;
-
-// Regla 3.7: Si el jefe paso de 70 anos o fue a prision
-if (jefeActual->is_dead == 0 && (jefeActual->age > 70 || jefeActual->in_jail == 1)) {
-    Nodo* sucesorArbol = buscarPrimeroEnSubarbol(jefeActual, false, false);
-    if (!sucesorArbol) {
-        sucesorArbol = seleccionarSucesor(jefeActual, false);
+    // Si no hay ningún jefe asignado inicialmente
+    if (!jefeActual) {
+        Nodo* primero = buscarPrimerLibreGlobal();
+        if (primero) promoverNuevoJefe(nullptr, primero);
+        return;
     }
-    if (sucesorArbol) {
-        promoverNuevoJefe(jefeActual, sucesorArbol);
-    } else if (jefeActual->age > 70 && jefeActual->in_jail == 0) {
-        Nodo* encarcelado = seleccionarSucesor(jefeActual, true);
-        if (!encarcelado) encarcelado = buscarMasCercanoEncarcelado(jefeActual);
-        if (encarcelado) promoverNuevoJefe(jefeActual, encarcelado);
-    }
-    return;
-}
 
-// Reglas 3.1 a 3.6: Si el jefe actual murio
-if (jefeActual->is_dead == 1) {
-    Nodo* sucesor = seleccionarSucesor(jefeActual, false);
-
-    if (!sucesor) {
-        sucesor = seleccionarSucesor(jefeActual, true);
-        if (!sucesor) {
-            sucesor = buscarMasCercanoEncarcelado(jefeActual);
+    // Regla 3.6 (segunda parte): Si el jefe actual dirige desde la cárcel y alguien quedó libre, el libre toma el mando
+    if (jefeActual->is_dead == 0 && jefeActual->in_jail == 1 && huboLiberacion) {
+        Nodo* nuevoLibre = buscarPrimerLibreGlobal();
+        if (nuevoLibre && nuevoLibre != jefeActual) {
+            promoverNuevoJefe(jefeActual, nuevoLibre);
+            return;
         }
     }
 
-    if (sucesor) {
-        promoverNuevoJefe(jefeActual, sucesor);
-    } else {
-        jefeActual->is_boss = 0;
-        jefeActual->was_boss = 1;
-        std::cout << "\n[ALERTA] No quedan miembros vivos disponibles para asumir el liderazgo.\n";
+    // Regla 3.7: Si el jefe pasó de 70 años o fue a prisión
+    if (jefeActual->is_dead == 0 && (jefeActual->age > 70 || jefeActual->in_jail == 1)) {
+        Nodo* sucesorArbol = buscarPrimeroEnSubarbol(jefeActual, false, false);
+        if (!sucesorArbol) {
+            sucesorArbol = seleccionarSucesor(jefeActual, false);
+        }
+        if (sucesorArbol) {
+            promoverNuevoJefe(jefeActual, sucesorArbol);
+        } else if (jefeActual->age > 70 && jefeActual->in_jail == 0) {
+            // Si tiene >70 pero no hay ningún otro sucesor libre en toda la familia, busca en la cárcel
+            Nodo* encarcelado = seleccionarSucesor(jefeActual, true);
+            if (!encarcelado) encarcelado = buscarMasCercanoEncarcelado(jefeActual);
+            if (encarcelado) promoverNuevoJefe(jefeActual, encarcelado);
+        }
+        return;
     }
 
+    // Reglas 3.1 a 3.6: Si el jefe actual murió
+    if (jefeActual->is_dead == 1) {
+        // Primero intentar con miembros libres
+        Nodo* sucesor = seleccionarSucesor(jefeActual, false);
 
-}
+        // Regla 3.6: Si todos los jefes y sucesores libres murieron, aplicar mismas reglas con vivos en la cárcel
+        if (!sucesor) {
+            sucesor = seleccionarSucesor(jefeActual, true);
+            if (!sucesor) {
+                sucesor = buscarMasCercanoEncarcelado(jefeActual);
+            }
+        }
 
+        if (sucesor) {
+            promoverNuevoJefe(jefeActual, sucesor);
+        } else {
+            jefeActual->is_boss = 0;
+            jefeActual->was_boss = 1;
+            std::cout << "\n[ALERTA] No quedan miembros vivos disponibles para asumir el liderazgo.\n";
+        }
+    }
 }
 
 int ArbolMafia::obtenerProfundidad(Nodo* n) const {
@@ -464,5 +477,21 @@ void ArbolMafia::editarNodo(int id) {
         }
     } while (opcion != 0);
 
-    verificarSucesion();
+    (this->*static_cast<void (ArbolMafia::*)()>(&ArbolMafia::verificarSucesion))();
+}
+Nodo* ArbolMafia::buscarPrimerLibreGlobal() const {
+    if (!raiz) return nullptr;
+    ColaNodos cola;
+    cola.encolar(raiz);
+
+    while (!cola.estaVacia()) {
+        Nodo* actual = cola.desencolar();
+        if (actual->izq) cola.encolar(actual->izq);
+        if (actual->der) cola.encolar(actual->der);
+
+        if (esElegible(actual, false)) {
+            return actual;
+        }
+    }
+    return nullptr;
 }

@@ -20,7 +20,7 @@ void promoverNuevoJefe(Nodo* jefeAnterior, Nodo* nuevoJefe);
 void liberarMemoria();
 Nodo* buscarPorId(int id) const;
 Nodo* obtenerJefeActual() const;
-
+Nodo* buscarPrimerLibreGlobal() const;
 void imprimirArbolVivos(Nodo* nodo, const std::string& prefijo, bool esUltimo) const;
 void imprimirOrdenSucesion(Nodo* nodo, int& posicion) const;
 public:
@@ -33,6 +33,7 @@ void mostrarLineaSucesion() const;
 void mostrarTodosLosMiembros() const;
 void editarNodo(int id);
 void simularEventoJefe(int tipoEvento); // 1:muerte, 2:carcel, 3: edad >70
+void verificarSucesion(bool huboLiberacion = false);
 };
 
 #endif
