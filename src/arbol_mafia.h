@@ -32,6 +32,7 @@ bool guardarEnCSV(const std::string& rutaCSV) const;
 void mostrarLineaSucesion() const;
 void mostrarTodosLosMiembros() const;
 void editarNodo(int id);
+void simularEventoJefe(int tipoEvento); // 1:muerte, 2:carcel, 3: edad >70
 };
 
 #endif

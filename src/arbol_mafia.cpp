@@ -237,6 +237,26 @@ void ArbolMafia::promoverNuevoJefe(Nodo* jefeAnterior, Nodo* nuevoJefe) {
               << "\n";
 }
 
+void ArbolMafia::simularEventoJefe(int tipoEvento) {
+Nodo* jefe = obtenerJefeActual();
+if (!jefe) {
+std::cout << "[ERROR] No hay jefe actual.\n";
+return;
+}
+
+if (tipoEvento == 1) {
+    std::cout << "\n[EVENTO] " << jefe->name << " " << jefe->last_name << " ha fallecido.\n";
+    jefe->is_dead = 1;
+} else if (tipoEvento == 2) {
+    std::cout << "\n[EVENTO] " << jefe->name << " " << jefe->last_name << " ha sido encarcelado.\n";
+    jefe->in_jail = 1;
+} else if (tipoEvento == 3) {
+    std::cout << "\n[EVENTO] " << jefe->name << " " << jefe->last_name << " ha superado los 70 años (71).\n";
+    jefe->age = 71;
+}
+verificarSucesion();
+}
+
 void ArbolMafia::verificarSucesion() {
    
 Nodo* jefeActual = obtenerJefeActual();
