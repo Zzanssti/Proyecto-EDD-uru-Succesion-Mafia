@@ -68,7 +68,7 @@ while (actual) {
     }
     actual = actual->sig_lista;
 }
-(this->*static_cast<void (ArbolMafia::*)()>(&ArbolMafia::verificarSucesion))();
+verificarSucesion(false);
 return true;
 }
 
@@ -254,7 +254,7 @@ if (tipoEvento == 1) {
     std::cout << "\n[EVENTO] " << jefe->name << " " << jefe->last_name << " ha superado los 70 años (71).\n";
     jefe->age = 71;
 }
-(this->*static_cast<void (ArbolMafia::*)()>(&ArbolMafia::verificarSucesion))();
+verificarSucesion(false);
 }
 
 void ArbolMafia::liberarMiembro(int id) {
@@ -274,7 +274,8 @@ if (objetivo->in_jail == 0) {
     return;
 }
 
-objetivo->in_jail = 0;
+verificarSucesion(true);
+
 std::cout << "\n[LIBERACION] " << objetivo->name << " " << objetivo->last_name
           << " (ID " << objetivo->id << ") ha salido de prision.\n";
 verificarSucesion(true);
@@ -539,7 +540,7 @@ void ArbolMafia::editarNodo(int id) {
         }
     } while (opcion != 0);
 
-    (this->*static_cast<void (ArbolMafia::*)()>(&ArbolMafia::verificarSucesion))();
+    verificarSucesion(false);
 }
 Nodo* ArbolMafia::buscarPrimerLibreGlobal() const {
     if (!raiz) return nullptr;

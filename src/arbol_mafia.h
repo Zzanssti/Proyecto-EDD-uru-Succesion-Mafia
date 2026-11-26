@@ -29,14 +29,13 @@ void imprimirOrdenSucesion(Nodo* nodo, int& posicion) const;
 public:
 ArbolMafia();
 ~ArbolMafia();
-void verificarSucesion();
+void verificarSucesion (bool huboLiberacion = false);
 bool cargarDesdeCSV(const std::string& rutaCSV);
 bool guardarEnCSV(const std::string& rutaCSV) const;
 void mostrarLineaSucesion() const;
 void mostrarTodosLosMiembros() const;
 void editarNodo(int id);
 void simularEventoJefe(int tipoEvento); // 1:muerte, 2:carcel, 3: edad >70
-void verificarSucesion(bool huboLiberacion = false);
 void liberarMiembro(int id);
 };
 
